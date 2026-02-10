@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ZFun Loading</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<audio id="bg-music" preload="auto"></audio>
+
+<div class="background">
+    <div class="bg bg1"></div>
+    <div class="bg bg2"></div>
+    <div class="bg bg3"></div>
+    <div class="bg bg4"></div>
+</div>
+
+<div class="overlay"></div>
+
+<div class="window">
+
+    <div class="window-bg"></div>
+
+    <div class="cube-bg">
+        <span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="window-vignette"></div>
+
+    <div class="window-header">
+        <span class="window-title">Server</span>
+        <span class="window-close">✕</span>
+    </div>
+
+    <div class="window-content">
+        <h1 id="title">ZFun Loading<span id="dots"></span></h1>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress"></div>
+        </div>
+
+        <p id="percent">0%</p>
+        <p id="status">Connecting…</p>
+
+        <p id="authors">
+            Project authors:<br>
+            Threeple, LD_munder, EL_SOSO, tupikrupik.
+        </p>
+    </div>
+</div>
+
+<script>
+
+const music = document.getElementById("bg-music");
+
+music.src = "audio/loading.mp3";
+music.volume = 0.4;
+music.loop = false; // повтор делаем вручную
+
+music.addEventListener("ended", () => {
+    music.currentTime = 0;
+    music.play().catch(() => {});
+});
+
+const startMusic = () => {
+    music.play().catch(() => {});
+    document.removeEventListener("mousedown", startMusic);
+    document.removeEventListener("keydown", startMusic);
+};
+
+document.addEventListener("mousedown", startMusic, { once: true });
+document.addEventListener("keydown", startMusic, { once: true });
+
+const statuses = [
+    "Loading content…",
+    "Synchronizing addons…",
+    "Sending Lua files…",
+    "Almost ready…"
+];
+
+let progress = 0;
+let statusIndex = 0;
+
+const bar = document.getElementById("progress");
+const percent = document.getElementById("percent");
+const status = document.getElementById("status");
+
+setInterval(() => {
+    if (progress < 100) {
+        progress += Math.random() * 3.5;
+        if (progress > 100) progress = 100;
+
+        bar.style.width = progress + "%";
+        percent.innerText = Math.floor(progress) + "%";
+
+        if (Math.floor(progress) % 25 === 0) {
+            status.innerText = statuses[statusIndex % statuses.length];
+            statusIndex++;
+        }
+    } else {
+        status.innerText = "Ready!";
+    }
+}, 300);
+
+let dots = "";
+setInterval(() => {
+    dots = dots.length < 3 ? dots + "." : "";
+    document.getElementById("dots").innerText = dots;
+}, 500);
+</script>
+
+</body>
+</html>
