@@ -7,6 +7,7 @@
 </head>
 <body>
 
+<!-- BACKGROUND -->
 <div class="background">
     <div class="bg bg1"></div>
     <div class="bg bg2"></div>
@@ -16,6 +17,7 @@
 
 <div class="overlay"></div>
 
+<!-- MAIN WINDOW -->
 <div class="window">
     <div class="window-header">
         <span class="window-title">Server</span>
@@ -23,11 +25,11 @@
     </div>
 
     <div class="window-content">
-        <h1>
-    ZFun Loading
-    <span class="spinner"></span>
-</h1>
 
+        <h1>
+            ZFun Loading
+            <span class="spinner"></span>
+        </h1>
 
         <div class="progress-bar">
             <div class="progress-fill" id="progress"></div>
@@ -36,74 +38,126 @@
         <p id="percent">0%</p>
         <p id="status">Connecting…</p>
 
-        <p id="authors">
-            Project authors:<br>
-            Threeple, LD_munder, EL_SOSO, tupikrupik.
-        </p>
+        <!-- CURRENT DOWNLOAD (ONE LINE) -->
+        <div class="file-list-container" id="file-window">
+            <div class="file-item">
+                <span class="tag-sys">[WAIT]</span>
+                <span class="filename">Waiting for server…</span>
+            </div>
+        </div>
+
+        <!-- AUTHORS -->
+        <div id="authors">
+            Project profiles:<br>
+            Threeple · LD_munder · EL_SOSO · tupikrupik
+        </div>
+
     </div>
 </div>
 
+<!-- TIPS -->
 <div class="tips-panel">
     <div class="tips-title">TIPS</div>
-
     <ul class="tips-list">
-        <li>Oboudno</li>
         <li>Follow Telegram channel</li>
         <li>The server is regularly updated</li>
-        <li>Join to Discord</li>
-        <li>Respect</li>
+        <li>Respect other players</li>
+        <li>Enjoy the chaos</li>
     </ul>
 </div>
 
+<!-- UPDATES -->
 <div class="updates-panel">
     <div class="updates-title">UPDATES</div>
-
     <ul class="updates-list">
-        <li>Added new gestures</li>
-        <li>ZhopaPopa</li>
-        <li>DrunCH</li>
-        <li>New host</li>
-        <li>New update coming soon</li>
+        <li>New gestures added</li>
+        <li>Weapon animations improved</li>
+        <li>Server optimization</li>
+        <li>More updates soon</li>
     </ul>
 </div>
 
+<!-- SCRIPT -->
 <script>
-    const statuses = [
-        "Loading content…",
-        "Synchronizing addons…",
-        "Sending Lua files…",
-        "Almost ready…"
-    ];
+let totalFiles = 0;
 
-    let progress = 0;
-    let statusIndex = 0;
+const progressBar = document.getElementById("progress");
+const percentEl = document.getElementById("percent");
+const statusEl = document.getElementById("status");
+const fileWindow = document.getElementById("file-window");
 
-    const bar = document.getElementById("progress");
-    const percent = document.getElementById("percent");
-    const status = document.getElementById("status");
+/* replace text, not append */
+function setCurrentDownload(html) {
+    fileWindow.innerHTML = `<div class="file-item">${html}</div>`;
+}
+
+/* ===== GMOD HOOKS ===== */
+
+window.SetStatusChanged = function (status) {
+    if (!status) return;
+
+    statusEl.innerText = status;
+
+    const addonMatch = status.match(/'([^']+)'/);
+    if (addonMatch && status.toUpperCase().includes("LOADING")) {
+        setCurrentDownload(
+            `<span class="tag-addon">[ADDON]</span>
+             <span class="filename">${addonMatch[1]}</span>`
+        );
+    } else {
+        setCurrentDownload(
+            `<span class="tag-sys">[STATUS]</span>
+             <span class="filename">${status}</span>`
+        );
+    }
+};
+
+window.DownloadingFile = function (fileName) {
+    const clean = fileName.includes("/")
+        ? fileName.split("/").pop()
+        : fileName;
+
+    statusEl.innerText = "Downloading file…";
+
+    setCurrentDownload(
+        `<span class="tag-file">[FILE]</span>
+         <span class="filename">${clean}</span>`
+    );
+};
+
+window.SetFilesTotal = function (total) {
+    totalFiles = total;
+};
+
+window.SetFilesRemaining = function (remaining) {
+    if (totalFiles <= 0) return;
+
+    const done = totalFiles - remaining;
+    const percent = (done / totalFiles) * 100;
+
+    progressBar.style.width = percent + "%";
+    percentEl.innerText = Math.floor(percent) + "%";
+};
+
+/* ===== BROWSER DEMO MODE ===== */
+if (!window.gmod) {
+    let fake = 0;
+    SetFilesTotal(100);
 
     setInterval(() => {
-        if (progress < 100) {
-            progress += Math.random() * 3.5;
-            if (progress > 100) progress = 100;
+        fake++;
 
-            bar.style.width = progress + "%";
-            percent.innerText = Math.floor(progress) + "%";
+        SetStatusChanged("LOADING 'addon_" + fake + "'");
+        DownladingFake("file_" + fake + ".dat");
+        SetFilesRemaining(100 - fake);
 
-            if (Math.floor(progress) % 25 === 0) {
-                status.innerText = statuses[statusIndex % statuses.length];
-                statusIndex++;
-            }
-        } else {
-            status.innerText = "Ready!";
-        }
-    }, 300);
+        if (fake >= 100) fake = 0;
+    }, 700);
+}
 
-    let dots = "";
-    setInterval(() => {
-        dots = dots.length < 3 ? dots + "." : "";
-        document.getElementById("dots").innerText = dots;
-    }, 500);
+function DownladingFake(name) {
+    window.DownloadingFile(name);
+}
 </script>
 
 </body>
