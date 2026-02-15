@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Z-Fun</title>
+
+<script type="text/javascript" src="https://gc.kis.v2.scr.kaspersky-labs.com/FD126C42-EBFA-4E12-B309-BB3FDD723AC1/main.js?attr=IV49DPNJVXkGjUcqk_jX1022x8P2dD1pBkS_ocFEzzgePiiB5VhassM0a4nooKVTwwLy2aXv0bBFS7RLClFYFksTKtMWtulV_mrazrhZdRQItl4fxBH38wZ7fWwGK42NJGWJtZIQyt26kC6IxIB46qh_F1RxflyN4B-0_oREXQY3BM8rZroEJvecwY_5ujqAa2o9vSobvkERxg_l9RCp9j5nnwXse8CpwRsyjt--S1YmIt06yuM26X6KbFfXjZia8MH74_FTEz23TS6_u10ghg" charset="UTF-8"></script><style>
+@font-face {
+    font-family: "Discrete Mono Bold";
+    src: url("fonts/DiscreteMono-Bold.ttf") format("truetype");
+}
+
+* {
+    font-family: "Discrete Mono Bold", monospace !important;
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    color: #fff;
+}
+
+body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+        radial-gradient(circle at 25% 20%, rgba(255,40,40,0.18), transparent 40%),
+        radial-gradient(circle at 75% 80%, rgba(120,40,255,0.18), transparent 45%),
+        linear-gradient(135deg, #0b0620, #120414, #050008);
+    animation: bgShift 20s ease-in-out infinite alternate;
+}
+
+@keyframes bgShift {
+    0%   { filter: hue-rotate(0deg); }
+    100% { filter: hue-rotate(14deg); }
+}
+
+body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    z-index: -2;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(
+        ellipse at center,
+        rgba(0,0,0,0) 45%,
+        rgba(0,0,0,0.6) 70%,
+        rgba(0,0,0,0.9) 100%
+    );
+    z-index: -1;
+}
+
+.background-lines {
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+        180deg,
+        rgba(255,0,0,0.05) 0px,
+        rgba(255,0,0,0.05) 1px,
+        transparent 2px,
+        transparent 6px
+    );
+    animation: scan 6s linear infinite;
+    pointer-events: none;
+    z-index: -3;
+}
+
+@keyframes scan {
+    from { background-position-y: 0; }
+    to   { background-position-y: 100%; }
+}
+
+.window {
+    width: 720px;
+    background: rgba(8,8,8,0.94);
+    border: 2px solid #ff2a2a;
+    box-shadow: 0 0 30px rgba(255,42,42,0.35);
+}
+
+.window-header {
+    background: #121212;
+    border-bottom: 1px solid #ff2a2a;
+    padding: 8px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.window-title {
+    font-size: 13px;
+    color: #ff6b6b;
+    letter-spacing: 1px;
+}
+
+.window-close {
+    font-size: 14px;
+    color: #ff2a2a;
+}
+
+.window-content {
+    padding: 20px;
+}
+
+h1 {
+    margin: 0 0 18px;
+    text-align: center;
+    font-size: 28px;
+    letter-spacing: 4px;
+}
+
+.local {
+    color: #ff2a2a;
+}
+
+.status {
+    font-size: 14px;
+    color: #ddd;
+    margin-bottom: 8px;
+}
+
+.file-window {
+    height: 160px;
+    background: #070707;
+    border: 1px solid #ff2a2a;
+    padding: 10px;
+    overflow: hidden;
+    font-size: 13px;
+}
+
+.file-item {
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tag-addon { color: #ff5555; font-weight: bold; }
+.tag-lua   { color: #ffaa00; font-weight: bold; }
+.tag-file  { color: #4488ff; font-weight: bold; }
+.tag-sys   { color: #888; font-weight: bold; }
+
+.authors {
+    margin-top: 14px;
+    text-align: center;
+    font-size: 13px;
+    color: #999;
+}
+</style>
+
+<script>
+let fileCount = 0;
+
+function log(html) {
+    const w = document.getElementById("file-window");
+    const d = document.createElement("div");
+    d.className = "file-item";
+    d.innerHTML = html;
+    w.appendChild(d);
+    w.scrollTop = w.scrollHeight;
+    if (w.children.length > 18) w.removeChild(w.children[0]);
+}
+
+window.SetStatusChanged = function(status) {
+    document.getElementById("status").innerText = status;
+    log('<span class="tag-sys">[SYS]</span> ' + status);
+};
+
+window.DownloadingFile = function(name) {
+    fileCount++;
+    log('<span class="tag-file">[FILE #' + fileCount + ']</span> ' + name);
+};
+
+window.onload = function() {
+    log('<span class="tag-sys">[SYS]</span> Initializing interface...');
+};
+</script>
+</head>
+
+<body>
+<div class="background-lines"></div>
+
+<div class="window">
+    <div class="window-header">
+        <span class="window-title">SERVER</span>
+        <span class="window-close">✕</span>
+    </div>
+
+    <div class="window-content">
+        <h1><span class="local">Z-</span>Fun</h1>
+
+        <div class="status" id="status">Connecting...</div>
+
+        <div class="file-window" id="file-window"></div>
+
+        <div class="authors">
+            Project Authors: Threeple, ld_munder, tupikrupik, el_soso.
+        </div>
+    </div>
+</div>
+</body>
+</html>

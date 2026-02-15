@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+@font-face {
+	font-family: "Disket-Mono-Regular";
+	src: url("../fonts/Disket-Mono-Regular.ttf");
+}
+
+body {
+	margin: 0;
+	background-color: rgb(8, 6, 10);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	overflow: hidden;
+	height: 100vh;
+	width: 100vw;
+}
+
+/* ===== ФОН (НЕ УЧАСТВУЕТ В FLEX) ===== */
+canvas {
+	position: fixed;
+	inset: 0;
+	width: 105vw;
+	height: 105vh;
+	z-index: -2;
+}
+
+.gradient {
+	position: fixed;
+	inset: 0;
+	width: 105vw;
+	height: 105vh;
+	background: linear-gradient(
+		0deg,
+		rgba(65, 1, 1, 0.5) 5%,
+		rgba(1, 0, 17, 0.37) 70%
+	);
+	z-index: -1;
+}
+
+.info-down {
+	font-family: 'Bahnschrift';
+	font-size: 2vh;
+	color: rgb(155,155,155);
+	position: fixed;
+	bottom: 10px;
+}
+
+/* ===== ОКНО ===== */
+.window {
+	width: 720px;
+	background: rgba(8,8,8,0.94);
+	border: 2px solid #ff2a2a;
+	box-shadow: 0 0 30px rgba(255,42,42,0.35);
+	font-family: "Disket-Mono-Regular", monospace;
+}
+
+.window-header {
+	background: #121212;
+	border-bottom: 1px solid #ff2a2a;
+	padding: 8px 12px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.window-title {
+	font-size: 13px;
+	color: #ff6b6b;
+	letter-spacing: 1px;
+}
+
+.window-close {
+	font-size: 14px;
+	color: #ff2a2a;
+}
+
+.window-content {
+	padding: 20px;
+}
+
+.window-content h1 {
+	margin: 0 0 18px;
+	text-align: center;
+	font-size: 28px;
+	letter-spacing: 4px;
+	color: #fff;
+}
+
+.local { color: #ff2a2a; }
+
+.status {
+	font-size: 14px;
+	color: #ddd;
+	margin-bottom: 8px;
+}
+
+.file-window {
+	height: 160px;
+	background: #070707;
+	border: 1px solid #ff2a2a;
+	padding: 10px;
+	overflow: hidden;
+	font-size: 13px;
+	color: #fff;
+}
+
+.file-item {
+	margin-bottom: 4px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.tag-file { color: #4488ff; font-weight: bold; }
+.tag-sys  { color: #888; font-weight: bold; }
+
+.authors {
+	margin-top: 14px;
+	text-align: center;
+	font-size: 13px;
+	color: #999;
+}
+
+.character {
+	position: absolute;
+	right: calc(50% + 440px); /* слева от окна */
+	bottom: 2;
+	height: 42vh;
+	pointer-events: none;
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="grid"></canvas>
+<div class="gradient"></div>
+
+<img src="person.png" class="character" alt="">
+
+<div class="window">
+	<div class="window-header">
+		<span class="window-title">SERVER</span>
+		<span class="window-close">✕</span>
+	</div>
+
+	<div class="window-content">
+		<h1><span class="local">Z-</span>Fun</h1>
+
+		<div class="status" id="status">Connecting...</div>
+		<div class="file-window" id="file-window"></div>
+
+		<div class="authors">Loading</div>
+	</div>
+</div>
+
+<span class="info-down"></span>
+
+<script>
+const canvas = document.getElementById('grid');
+const ctx = canvas.getContext('2d');
+
+canvas.width = window.innerWidth + 25;
+canvas.height = window.innerHeight + 25;
+
+const gridSize = 60;
+let offsetX = window.innerWidth;
+let offsetY = -window.innerHeight;
+const gridColor = 'rgba(99, 88, 104, 0.05)';
+
+function drawGrid() {
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+	for (let x = offsetX % gridSize; x < canvas.width + gridSize; x += gridSize) {
+		ctx.beginPath();
+		ctx.moveTo(x, 0);
+		ctx.lineTo(x, canvas.height);
+		ctx.strokeStyle = gridColor;
+		ctx.lineWidth = 2.5;
+		ctx.stroke();
+	}
+
+	for (let y = offsetY % gridSize; y < canvas.height + gridSize; y += gridSize) {
+		ctx.beginPath();
+		ctx.moveTo(0, y);
+		ctx.lineTo(canvas.width, y);
+		ctx.strokeStyle = gridColor;
+		ctx.lineWidth = 2.5;
+		ctx.stroke();
+	}
+
+	offsetX -= Math.min(Math.max(Math.sin(Date.now() / 10000), -0.2), 0.2);
+	offsetY += 0.2;
+
+	requestAnimationFrame(drawGrid);
+}
+
+drawGrid();
+</script>
+
+<script>
+let fileCount = 0;
+
+function log(html) {
+	const w = document.getElementById("file-window");
+	const d = document.createElement("div");
+	d.className = "file-item";
+	d.innerHTML = html;
+	w.appendChild(d);
+	w.scrollTop = w.scrollHeight;
+	if (w.children.length > 18) w.removeChild(w.children[0]);
+}
+
+window.SetStatusChanged = function(status) {
+	document.getElementById("status").innerText = status;
+	log('<span class="tag-sys">[SYS]</span> ' + status);
+};
+
+window.DownloadingFile = function(name) {
+	fileCount++;
+	log('<span class="tag-file">[FILE #' + fileCount + ']</span> ' + name);
+};
+
+window.onload = function() {
+	log('<span class="tag-sys">[SYS]</span> Initializing...');
+};
+</script>
+
+</body>
+</html>
